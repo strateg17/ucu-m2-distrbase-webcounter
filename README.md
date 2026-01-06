@@ -43,6 +43,18 @@ clients=5 requests_per_client=10000 total_requests=50000 elapsed=2.345s throughp
 
 `count` показує фактичне значення на сервері після навантаження.
 
+## PostgreSQL як сховище
+
+Сервер підтримує сховище в PostgreSQL з атомарним збільшенням лічильника:
+
+```bash
+STORAGE_MODE=postgres POSTGRES_DSN="postgres://user:pass@localhost/db" uvicorn server:app --host 0.0.0.0 --port 8080
+```
+
+Таблиця `user_counter` створюється автоматично (стовпці `counter` та `version`), а запис для `COUNTER_USER_ID` (за замовчуванням 1)
+додається, якщо його ще немає. Інкремент виконується через `UPDATE ... SET counter = counter + 1 RETURNING counter`, тому не
+потребує додаткового блокування.
+
 ## Перед початком вимірювань
 
 1. **Почистити стан**: перед новою серією тестів видаліть файл лічильника або перезапустіть сервер, щоб значення починалось з нуля.
@@ -57,3 +69,19 @@ clients=5 requests_per_client=10000 total_requests=50000 elapsed=2.345s throughp
 - 10 клієнтів × 10K запитів → очікуване `count = 100_000`
 
 Після кожної серії throughput можна отримати зі стандартного виводу `client.py`, а фінальне значення лічильника — через `GET /count` або з того ж виводу.
+
+## Тести PostgreSQL для завдання 2
+
+Скрипт `postgres_counter.py` запускає п'ять сценаріїв конкурентних оновлень у базі PostgreSQL: `lost-update`, `serializable`,
+`in-place`, `row-locking`, `optimistic`. Кожен варіант створює власні підключення для потоків, комітить кожну операцію та повертає
+час виконання.
+
+Перед запуском можна створити таблицю та початковий запис прапорцем `--prepare`, а очищення значення виконується через `--reset`.
+
+```bash
+python postgres_counter.py --dsn "postgres://user:pass@localhost/db" \
+  --scenario in-place --clients 10 --requests-per-client 10000 --prepare --reset
+```
+
+Після завершення скрипт друкує фактичне значення `counter`/`version`, час виконання та throughput, що дозволяє порівнювати
+продуктивність усіх стратегій.
