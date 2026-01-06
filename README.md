@@ -51,9 +51,9 @@ clients=5 requests_per_client=10000 total_requests=50000 elapsed=2.345s throughp
 STORAGE_MODE=postgres POSTGRES_DSN="postgres://user:pass@localhost/db" uvicorn server:app --host 0.0.0.0 --port 8080
 ```
 
-Сервер очікує, що PostgreSQL вже запущений та доступний за вказаним DSN; якщо з'єднання відсутнє, ендпоінти повернуть 503 з
-підказкою перевірити DSN/стан сервера. Таблиця `user_counter` створюється автоматично (стовпці `counter` та `version`), а запис для
-`COUNTER_USER_ID` (за замовчуванням 1) додається, якщо його ще немає. Інкремент виконується через `UPDATE ... SET counter = counter + 1 RETURNING counter`, тому не потребує додаткового блокування.
+Таблиця `user_counter` створюється автоматично (стовпці `counter` та `version`), а запис для `COUNTER_USER_ID` (за замовчуванням 1)
+додається, якщо його ще немає. Інкремент виконується через `UPDATE ... SET counter = counter + 1 RETURNING counter`, тому не
+потребує додаткового блокування.
 
 ## Перед початком вимірювань
 

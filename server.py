@@ -71,29 +71,11 @@ class FileCounter(Counter):
 class PostgresCounter(Counter):
     def __init__(self, dsn: str, user_id: int = 1) -> None:
         self._user_id = user_id
-        self._dsn = dsn
-        self._pool: SimpleConnectionPool | None = None
-        self._pool_lock = threading.Lock()
+        self._pool = SimpleConnectionPool(1, 10, dsn)
+        self._ensure_table()
 
-    def _ensure_pool(self) -> SimpleConnectionPool:
-        if self._pool:
-            return self._pool
-        with self._pool_lock:
-            if self._pool:
-                return self._pool
-            try:
-                pool = SimpleConnectionPool(1, 10, self._dsn)
-            except psycopg2.OperationalError as exc:  # pragma: no cover - runtime environment guard
-                raise HTTPException(
-                    status_code=503,
-                    detail="Unable to connect to PostgreSQL. Is the server running and DSN correct?",
-                ) from exc
-            self._pool = pool
-            self._initialize_table(pool)
-            return self._pool
-
-    def _initialize_table(self, pool: SimpleConnectionPool) -> None:
-        conn = pool.getconn()
+    def _ensure_table(self) -> None:
+        conn = self._pool.getconn()
         try:
             with conn:
                 with conn.cursor() as cur:
@@ -115,11 +97,10 @@ class PostgresCounter(Counter):
                         (self._user_id,),
                     )
         finally:
-            pool.putconn(conn)
+            self._pool.putconn(conn)
 
     def _get_connection(self) -> psycopg2.extensions.connection:
-        pool = self._ensure_pool()
-        return pool.getconn()
+        return self._pool.getconn()
 
     def increment(self) -> int:
         conn = self._get_connection()
