@@ -4,6 +4,8 @@ import threading
 import fcntl
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
+import psycopg2
+from psycopg2.pool import SimpleConnectionPool
 
 
 class CounterResponse(BaseModel):
@@ -66,6 +68,69 @@ class FileCounter(Counter):
                 fcntl.flock(f.fileno(), fcntl.LOCK_UN)
 
 
+class PostgresCounter(Counter):
+    def __init__(self, dsn: str, user_id: int = 1) -> None:
+        self._user_id = user_id
+        self._pool = SimpleConnectionPool(1, 10, dsn)
+        self._ensure_table()
+
+    def _ensure_table(self) -> None:
+        conn = self._pool.getconn()
+        try:
+            with conn:
+                with conn.cursor() as cur:
+                    cur.execute(
+                        """
+                        CREATE TABLE IF NOT EXISTS user_counter (
+                            user_id INTEGER PRIMARY KEY,
+                            counter INTEGER NOT NULL DEFAULT 0,
+                            version INTEGER NOT NULL DEFAULT 0
+                        )
+                        """
+                    )
+                    cur.execute(
+                        """
+                        INSERT INTO user_counter(user_id, counter, version)
+                        VALUES (%s, 0, 0)
+                        ON CONFLICT (user_id) DO NOTHING
+                        """,
+                        (self._user_id,),
+                    )
+        finally:
+            self._pool.putconn(conn)
+
+    def _get_connection(self) -> psycopg2.extensions.connection:
+        return self._pool.getconn()
+
+    def increment(self) -> int:
+        conn = self._get_connection()
+        try:
+            with conn:
+                with conn.cursor() as cur:
+                    cur.execute(
+                        "UPDATE user_counter SET counter = counter + 1 WHERE user_id = %s RETURNING counter",
+                        (self._user_id,),
+                    )
+                    row = cur.fetchone()
+                    if row is None:
+                        raise HTTPException(status_code=500, detail="Counter row missing")
+                    return row[0]
+        finally:
+            self._pool.putconn(conn)
+
+    def get(self) -> int:
+        conn = self._get_connection()
+        try:
+            with conn.cursor() as cur:
+                cur.execute("SELECT counter FROM user_counter WHERE user_id = %s", (self._user_id,))
+                row = cur.fetchone()
+                if row is None:
+                    raise HTTPException(status_code=404, detail="Counter row missing")
+                return row[0]
+        finally:
+            self._pool.putconn(conn)
+
+
 def build_counter() -> Counter:
     storage_mode = os.getenv("STORAGE_MODE", "memory").lower()
     if storage_mode == "memory":
@@ -73,6 +138,12 @@ def build_counter() -> Counter:
     if storage_mode == "file":
         path = os.getenv("COUNTER_FILE", "./data/counter.txt")
         return FileCounter(path)
+    if storage_mode == "postgres":
+        dsn = os.getenv("POSTGRES_DSN")
+        if not dsn:
+            raise ValueError("POSTGRES_DSN must be set for postgres storage mode")
+        user_id = int(os.getenv("COUNTER_USER_ID", "1"))
+        return PostgresCounter(dsn, user_id)
     raise ValueError(f"Unsupported STORAGE_MODE: {storage_mode}")
 
 
