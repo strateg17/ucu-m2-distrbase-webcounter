@@ -88,6 +88,7 @@ postgres://webcounter:webcounter@localhost:5432/webcounter
 **Варіант 2: Docker контейнер (рекомендовано, якщо не хочете ставити PostgreSQL локально)**
 
 ```bash
+docker pull postgres:16
 docker run --name webcounter-postgres \
   -e POSTGRES_USER=webcounter \
   -e POSTGRES_PASSWORD=webcounter \
