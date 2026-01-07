@@ -56,58 +56,9 @@ clients=5 requests_per_client=10000 total_requests=50000 elapsed=2.345s throughp
 STORAGE_MODE=postgres POSTGRES_DSN="postgres://user:pass@localhost/db" uvicorn server:app --host 0.0.0.0 --port 8080
 ```
 
-Сервер очікує, що PostgreSQL вже запущений та доступний за вказаним DSN; якщо з'єднання відсутнє, ендпоінти повернуть 503 з
-підказкою перевірити DSN/стан сервера. Таблиця `user_counter` створюється автоматично (стовпці `counter` та `version`), а запис для
-`COUNTER_USER_ID` (за замовчуванням 1) додається, якщо його ще немає. Інкремент виконується через `UPDATE ... SET counter = counter + 1 RETURNING counter`, тому не потребує додаткового блокування.
-
-### Налаштування PostgreSQL у WSL2 (Ubuntu 22.04)
-
-Для виконання завдання потрібен доступний сервер PostgreSQL. Є два типові варіанти.
-
-**Варіант 1: Локальна інсталяція у WSL2**
-
-```bash
-sudo apt update
-sudo apt install -y postgresql postgresql-contrib
-sudo service postgresql start
-```
-
-Далі створіть базу та користувача (з прикладу нижче змініть пароль):
-
-```bash
-sudo -u postgres psql -c "CREATE USER webcounter WITH PASSWORD 'webcounter';"
-sudo -u postgres psql -c "CREATE DATABASE webcounter OWNER webcounter;"
-```
-
-DSN для запуску сервера/скриптів:
-
-```bash
-postgres://webcounter:webcounter@localhost:5432/webcounter
-```
-
-**Варіант 2: Docker контейнер (рекомендовано, якщо не хочете ставити PostgreSQL локально)**
-
-```bash
-docker pull postgres:16
-docker run --name webcounter-postgres \
-  -e POSTGRES_USER=webcounter \
-  -e POSTGRES_PASSWORD=webcounter \
-  -e POSTGRES_DB=webcounter \
-  -p 5432:5432 \
-  -d postgres:16
-```
-
-Перевірка, що контейнер готовий:
-
-```bash
-docker logs -f webcounter-postgres
-```
-
-DSN для запуску серверу/скриптів такий самий:
-
-```bash
-postgres://webcounter:webcounter@localhost:5432/webcounter
-```
+Таблиця `user_counter` створюється автоматично (стовпці `counter` та `version`), а запис для `COUNTER_USER_ID` (за замовчуванням 1)
+додається, якщо його ще немає. Інкремент виконується через `UPDATE ... SET counter = counter + 1 RETURNING counter`, тому не
+потребує додаткового блокування.
 
 ## Перед початком вимірювань
 
