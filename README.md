@@ -168,22 +168,22 @@ postgres://counter_user:counter_pass@localhost:5432/counter_db
 
    Файл `hazelcast.yaml` уже є в репозиторії та вмикає CP Subsystem для трьох нод.
 
-2. Запустіть 3 ноди (важливо підмонтувати файл у `/opt/hazelcast/config/` і вказати його через `HZ_CONFIG`):
+2. Запустіть 3 ноди:
 
    ```bash
    docker run --name hazelcast-1 --network hazelcast-net \
-     -e HZ_CONFIG=/opt/hazelcast/config/hazelcast.yaml \
-     -v "$PWD/hazelcast.yaml:/opt/hazelcast/config/hazelcast.yaml" \
+     -e HZ_CONFIG=/opt/hazelcast/hazelcast.yaml \
+     -v "$PWD/hazelcast.yaml:/opt/hazelcast/hazelcast.yaml" \
      -p 5701:5701 -d hazelcast/hazelcast:5.4.0
 
    docker run --name hazelcast-2 --network hazelcast-net \
-     -e HZ_CONFIG=/opt/hazelcast/config/hazelcast.yaml \
-     -v "$PWD/hazelcast.yaml:/opt/hazelcast/config/hazelcast.yaml" \
+     -e HZ_CONFIG=/opt/hazelcast/hazelcast.yaml \
+     -v "$PWD/hazelcast.yaml:/opt/hazelcast/hazelcast.yaml" \
      -p 5702:5701 -d hazelcast/hazelcast:5.4.0
 
    docker run --name hazelcast-3 --network hazelcast-net \
-     -e HZ_CONFIG=/opt/hazelcast/config/hazelcast.yaml \
-     -v "$PWD/hazelcast.yaml:/opt/hazelcast/config/hazelcast.yaml" \
+     -e HZ_CONFIG=/opt/hazelcast/hazelcast.yaml \
+     -v "$PWD/hazelcast.yaml:/opt/hazelcast/hazelcast.yaml" \
      -p 5703:5701 -d hazelcast/hazelcast:5.4.0
    ```
 
@@ -192,9 +192,6 @@ postgres://counter_user:counter_pass@localhost:5432/counter_db
    ```bash
    docker logs -f hazelcast-1
    ```
-
-   Якщо бачите повідомлення `CP Subsystem is not enabled`, це означає, що нода не використала файл `hazelcast.yaml`.
-   Перевірте, що `HZ_CONFIG` вказує на `/opt/hazelcast/config/hazelcast.yaml` і файл змонтований саме в цю директорію.
 
 ### Запуск сценаріїв Task 3
 

@@ -14,8 +14,7 @@ from hazelcast.proxy.map import MapBlocking
 def create_client(members: list[str], cluster_name: str, redo_operation: bool) -> hazelcast.HazelcastClient:
     return hazelcast.HazelcastClient(
         cluster_name=cluster_name,
-        cluster_members=members,
-        redo_operation=redo_operation,
+        network={"cluster_members": members, "redo_operation": redo_operation},
     )
 
 

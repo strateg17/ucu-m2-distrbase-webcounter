@@ -139,8 +139,7 @@ class HazelcastCounter(Counter):
     def __init__(self, members: list[str], cluster_name: str, counter_name: str, redo_operation: bool) -> None:
         self._client = hazelcast.HazelcastClient(
             cluster_name=cluster_name,
-            cluster_members=members,
-            redo_operation=redo_operation,
+            network={"cluster_members": members, "redo_operation": redo_operation},
         )
         self._atomic = self._client.cp_subsystem.get_atomic_long(counter_name).blocking()
 
