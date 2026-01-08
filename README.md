@@ -145,33 +145,6 @@ postgres://counter_user:counter_pass@localhost:5432/counter_db
      --scenario row-locking --clients 10 --requests-per-client 10000 --reset
    ```
 
-3. Команди для тестування усіх сценаріїв (10 клієнтів × 10K запитів):
-
-   ```bash
-   python postgres_counter.py --dsn "postgres://counter_user:counter_pass@localhost:5432/counter_db" \
-     --scenario lost-update --clients 10 --requests-per-client 10000 --reset
-   ```
-
-   ```bash
-   python postgres_counter.py --dsn "postgres://counter_user:counter_pass@localhost:5432/counter_db" \
-     --scenario serializable --clients 10 --requests-per-client 10000 --reset
-   ```
-
-   ```bash
-   python postgres_counter.py --dsn "postgres://counter_user:counter_pass@localhost:5432/counter_db" \
-     --scenario in-place --clients 10 --requests-per-client 10000 --reset
-   ```
-
-   ```bash
-   python postgres_counter.py --dsn "postgres://counter_user:counter_pass@localhost:5432/counter_db" \
-     --scenario row-locking --clients 10 --requests-per-client 10000 --reset
-   ```
-
-   ```bash
-   python postgres_counter.py --dsn "postgres://counter_user:counter_pass@localhost:5432/counter_db" \
-     --scenario optimistic --clients 10 --requests-per-client 10000 --reset
-   ```
-
 ### Тест продуктивності для Web-counter (10 клієнтів × 10K)
 
 1. Запустіть сервер у режимі PostgreSQL (див. вище).
