@@ -17,6 +17,11 @@
 pip install -r requirements.txt
 ```
 
+> Якщо бачите `ModuleNotFoundError: No module named 'psycopg2'` під час запуску
+> серверу або `postgres_counter.py`, переконайтесь, що встановлені залежності з
+> `requirements.txt` у тій самій віртуальній енвіронменті, де запускається
+> команда.
+
 ## Запуск сервера
 
 ```bash
