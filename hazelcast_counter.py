@@ -5,10 +5,9 @@ from __future__ import annotations
 import argparse
 import threading
 import time
-from typing import Callable
+from typing import Any, Callable
 
 import hazelcast
-from hazelcast.proxy.map import MapBlocking
 
 
 def create_client(members: list[str], cluster_name: str, redo_operation: bool) -> hazelcast.HazelcastClient:
@@ -19,13 +18,13 @@ def create_client(members: list[str], cluster_name: str, redo_operation: bool) -
     )
 
 
-def map_no_lock_worker(distributed_map: MapBlocking, key: str, iterations: int) -> None:
+def map_no_lock_worker(distributed_map: Any, key: str, iterations: int) -> None:
     for _ in range(iterations):
         value = distributed_map.get(key) or 0
         distributed_map.put(key, value + 1)
 
 
-def map_pessimistic_worker(distributed_map: MapBlocking, key: str, iterations: int) -> None:
+def map_pessimistic_worker(distributed_map: Any, key: str, iterations: int) -> None:
     for _ in range(iterations):
         distributed_map.lock(key)
         try:
@@ -35,7 +34,7 @@ def map_pessimistic_worker(distributed_map: MapBlocking, key: str, iterations: i
             distributed_map.unlock(key)
 
 
-def map_optimistic_worker(distributed_map: MapBlocking, key: str, iterations: int) -> None:
+def map_optimistic_worker(distributed_map: Any, key: str, iterations: int) -> None:
     for _ in range(iterations):
         while True:
             value = distributed_map.get(key) or 0
@@ -75,7 +74,7 @@ def run_threads(
 
 def run_map_scenario(
     scenario: str,
-    distributed_map: MapBlocking,
+    distributed_map: Any,
     key: str,
     clients: int,
     iterations: int,
