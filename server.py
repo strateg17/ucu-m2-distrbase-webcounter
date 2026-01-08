@@ -4,6 +4,7 @@ import threading
 import fcntl
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
+import hazelcast
 import psycopg2
 from psycopg2.pool import SimpleConnectionPool
 
@@ -18,6 +19,9 @@ class Counter:
 
     def get(self) -> int:
         raise NotImplementedError
+
+    def close(self) -> None:
+        return None
 
 
 class MemoryCounter(Counter):
@@ -131,6 +135,24 @@ class PostgresCounter(Counter):
             self._pool.putconn(conn)
 
 
+class HazelcastCounter(Counter):
+    def __init__(self, members: list[str], cluster_name: str, counter_name: str, redo_operation: bool) -> None:
+        self._client = hazelcast.HazelcastClient(
+            cluster_name=cluster_name,
+            network={"cluster_members": members, "redo_operation": redo_operation},
+        )
+        self._atomic = self._client.cp_subsystem.get_atomic_long(counter_name).blocking()
+
+    def increment(self) -> int:
+        return self._atomic.increment_and_get()
+
+    def get(self) -> int:
+        return self._atomic.get()
+
+    def close(self) -> None:
+        self._client.shutdown()
+
+
 def build_counter() -> Counter:
     storage_mode = os.getenv("STORAGE_MODE", "memory").lower()
     if storage_mode == "memory":
@@ -144,6 +166,16 @@ def build_counter() -> Counter:
             raise ValueError("POSTGRES_DSN must be set for postgres storage mode")
         user_id = int(os.getenv("COUNTER_USER_ID", "1"))
         return PostgresCounter(dsn, user_id)
+    if storage_mode == "hazelcast":
+        members = [
+            member.strip()
+            for member in os.getenv("HAZELCAST_MEMBERS", "127.0.0.1:5701").split(",")
+            if member.strip()
+        ]
+        cluster_name = os.getenv("HAZELCAST_CLUSTER_NAME", "dev")
+        counter_name = os.getenv("HAZELCAST_ATOMIC_NAME", "web-counter")
+        redo_operation = os.getenv("HAZELCAST_REDO_OPERATION", "false").lower() == "true"
+        return HazelcastCounter(members, cluster_name, counter_name, redo_operation)
     raise ValueError(f"Unsupported STORAGE_MODE: {storage_mode}")
 
 
@@ -166,3 +198,8 @@ def get_count() -> CounterResponse:
 @app.get("/health")
 def health() -> dict[str, str]:
     return {"status": "ok"}
+
+
+@app.on_event("shutdown")
+def shutdown_counter() -> None:
+    counter.close()
