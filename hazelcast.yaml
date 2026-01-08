@@ -1,0 +1,5 @@
+hazelcast:
+  cluster-name: dev
+  cp-subsystem:
+    cp-member-count: 3
+    group-size: 3

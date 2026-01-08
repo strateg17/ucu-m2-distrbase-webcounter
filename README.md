@@ -156,6 +156,84 @@ postgres://counter_user:counter_pass@localhost:5432/counter_db
 
 Очікуване значення `count` після завершення — `100000`.
 
+## Hazelcast (Task 3)
+
+### Запуск 3 нод Hazelcast 5.4.0 у Docker
+
+1. Створіть мережу та підготуйте конфіг:
+
+   ```bash
+   docker network create hazelcast-net
+   ```
+
+   Файл `hazelcast.yaml` уже є в репозиторії та вмикає CP Subsystem для трьох нод.
+
+2. Запустіть 3 ноди:
+
+   ```bash
+   docker run --name hazelcast-1 --network hazelcast-net \
+     -e HZ_CONFIG=/opt/hazelcast/hazelcast.yaml \
+     -v "$PWD/hazelcast.yaml:/opt/hazelcast/hazelcast.yaml" \
+     -p 5701:5701 -d hazelcast/hazelcast:5.4.0
+
+   docker run --name hazelcast-2 --network hazelcast-net \
+     -e HZ_CONFIG=/opt/hazelcast/hazelcast.yaml \
+     -v "$PWD/hazelcast.yaml:/opt/hazelcast/hazelcast.yaml" \
+     -p 5702:5701 -d hazelcast/hazelcast:5.4.0
+
+   docker run --name hazelcast-3 --network hazelcast-net \
+     -e HZ_CONFIG=/opt/hazelcast/hazelcast.yaml \
+     -v "$PWD/hazelcast.yaml:/opt/hazelcast/hazelcast.yaml" \
+     -p 5703:5701 -d hazelcast/hazelcast:5.4.0
+   ```
+
+3. Переконайтесь, що CP Subsystem активована (у логах має бути `CP Group Members {groupId: ...}`):
+
+   ```bash
+   docker logs -f hazelcast-1
+   ```
+
+### Запуск сценаріїв Task 3
+
+Скрипт `hazelcast_counter.py` запускає чотири сценарії:
+
+- `map-no-lock` — інкремент у Distributed Map без блокувань.
+- `map-pessimistic` — песимістичне блокування `IMap.lock`.
+- `map-optimistic` — оптимістичне блокування через `replace_if_same`.
+- `atomic-long` — IAtomicLong (потребує CP Subsystem).
+
+Приклад запуску (10 потоків × 10К):
+
+```bash
+python hazelcast_counter.py --scenario map-no-lock --clients 10 --requests-per-client 10000 --reset
+python hazelcast_counter.py --scenario map-pessimistic --clients 10 --requests-per-client 10000 --reset
+python hazelcast_counter.py --scenario map-optimistic --clients 10 --requests-per-client 10000 --reset
+python hazelcast_counter.py --scenario atomic-long --clients 10 --requests-per-client 10000 --reset
+```
+
+Для перевірки `redo_operation`:
+
+```bash
+python hazelcast_counter.py --scenario atomic-long --clients 10 --requests-per-client 10000 --reset --redo-operation
+```
+
+### Використання Hazelcast як сховища Web-counter (Task 1)
+
+```bash
+STORAGE_MODE=hazelcast \
+HAZELCAST_MEMBERS="127.0.0.1:5701,127.0.0.1:5702,127.0.0.1:5703" \
+HAZELCAST_CLUSTER_NAME=dev \
+HAZELCAST_ATOMIC_NAME=web-counter \
+HAZELCAST_REDO_OPERATION=false \
+uvicorn server:app --host 0.0.0.0 --port 8080
+```
+
+Після старту сервера можна запускати клієнт:
+
+```bash
+python client.py http://localhost:8080 --clients 10 --requests-per-client 10000
+```
+
 ## Перед початком вимірювань
 
 1. **Почистити стан**: перед новою серією тестів видаліть файл лічильника або перезапустіть сервер, щоб значення починалось з нуля.
