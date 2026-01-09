@@ -5,40 +5,54 @@ from __future__ import annotations
 import argparse
 import threading
 import time
-from typing import Callable
+from typing import Any, Callable
 
 import hazelcast
-from hazelcast.proxy.map import MapBlocking
 
 
 def create_client(members: list[str], cluster_name: str, redo_operation: bool) -> hazelcast.HazelcastClient:
     return hazelcast.HazelcastClient(
         cluster_name=cluster_name,
-        network={"cluster_members": members, "redo_operation": redo_operation},
+        cluster_members=members,
+        redo_operation=redo_operation,
     )
 
 
-def map_no_lock_worker(distributed_map: MapBlocking, key: str, iterations: int) -> None:
+def _get_amount(value: dict[str, int] | None) -> int:
+    if not value:
+        return 0
+    return int(value.get("amount", 0))
+
+
+def _build_value(amount: int) -> dict[str, int]:
+    return {"amount": amount}
+
+
+def map_no_lock_worker(distributed_map: Any, key: str, iterations: int) -> None:
     for _ in range(iterations):
-        value = distributed_map.get(key) or 0
-        distributed_map.put(key, value + 1)
+        value = distributed_map.get(key)
+        time.sleep(0.01)
+        amount = _get_amount(value) + 1
+        distributed_map.put(key, _build_value(amount))
 
 
-def map_pessimistic_worker(distributed_map: MapBlocking, key: str, iterations: int) -> None:
+def map_pessimistic_worker(distributed_map: Any, key: str, iterations: int) -> None:
     for _ in range(iterations):
         distributed_map.lock(key)
         try:
-            value = distributed_map.get(key) or 0
-            distributed_map.put(key, value + 1)
+            value = distributed_map.get(key)
+            amount = _get_amount(value) + 1
+            distributed_map.put(key, _build_value(amount))
         finally:
             distributed_map.unlock(key)
 
 
-def map_optimistic_worker(distributed_map: MapBlocking, key: str, iterations: int) -> None:
+def map_optimistic_worker(distributed_map: Any, key: str, iterations: int) -> None:
     for _ in range(iterations):
         while True:
-            value = distributed_map.get(key) or 0
-            if distributed_map.replace_if_same(key, value, value + 1):
+            value = distributed_map.get(key)
+            amount = _get_amount(value)
+            if distributed_map.replace_if_same(key, value, _build_value(amount + 1)):
                 break
 
 
@@ -74,7 +88,7 @@ def run_threads(
 
 def run_map_scenario(
     scenario: str,
-    distributed_map: MapBlocking,
+    distributed_map: Any,
     key: str,
     clients: int,
     iterations: int,
@@ -134,9 +148,9 @@ def main() -> None:
         if args.scenario.startswith("map"):
             distributed_map = client.get_map(args.map_name).blocking()
             if args.reset:
-                distributed_map.put(args.key, 0)
+                distributed_map.put(args.key, _build_value(0))
             else:
-                distributed_map.put_if_absent(args.key, 0)
+                distributed_map.put_if_absent(args.key, _build_value(0))
 
             elapsed = run_map_scenario(
                 args.scenario,
@@ -146,7 +160,7 @@ def main() -> None:
                 args.requests_per_client,
             )
             total_requests = args.clients * args.requests_per_client
-            value = distributed_map.get(args.key) or 0
+            value = _get_amount(distributed_map.get(args.key))
         else:
             atomic_long = client.cp_subsystem.get_atomic_long(args.atomic_name).blocking()
             if args.reset:
