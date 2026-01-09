@@ -18,16 +18,6 @@ def create_client(members: list[str], cluster_name: str, redo_operation: bool) -
     )
 
 
-def _get_amount(value: dict[str, int] | None) -> int:
-    if not value:
-        return 0
-    return int(value.get("amount", 0))
-
-
-def _build_value(amount: int) -> dict[str, int]:
-    return {"amount": amount}
-
-
 def map_no_lock_worker(distributed_map: Any, key: str, iterations: int) -> None:
     for _ in range(iterations):
         value = distributed_map.get(key)

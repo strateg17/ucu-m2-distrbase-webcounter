@@ -172,17 +172,17 @@ postgres://counter_user:counter_pass@localhost:5432/counter_db
 
    ```bash
    docker run --name hazelcast-1 --network hazelcast-net \
-     -e HZ_CONFIG=/opt/hazelcast/hazelcast.yaml \
+     -e HAZELCAST_CONFIG=/opt/hazelcast/hazelcast.yaml \
      -v "$PWD/hazelcast.yaml:/opt/hazelcast/hazelcast.yaml" \
      -p 5701:5701 -d hazelcast/hazelcast:5.4.0
 
    docker run --name hazelcast-2 --network hazelcast-net \
-     -e HZ_CONFIG=/opt/hazelcast/hazelcast.yaml \
+     -e HAZELCAST_CONFIG=/opt/hazelcast/hazelcast.yaml \
      -v "$PWD/hazelcast.yaml:/opt/hazelcast/hazelcast.yaml" \
      -p 5702:5701 -d hazelcast/hazelcast:5.4.0
 
    docker run --name hazelcast-3 --network hazelcast-net \
-     -e HZ_CONFIG=/opt/hazelcast/hazelcast.yaml \
+     -e HAZELCAST_CONFIG=/opt/hazelcast/hazelcast.yaml \
      -v "$PWD/hazelcast.yaml:/opt/hazelcast/hazelcast.yaml" \
      -p 5703:5701 -d hazelcast/hazelcast:5.4.0
    ```
