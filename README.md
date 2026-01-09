@@ -166,7 +166,7 @@ postgres://counter_user:counter_pass@localhost:5432/counter_db
    python postgres_counter.py --dsn "postgres://counter_user:counter_pass@localhost:5432/counter_db" \
      --scenario row-locking --clients 10 --requests-per-client 10000 --reset
    ```
-## Тести PostgreSQL для завдання 2
+### Тести PostgreSQL для завдання 2
 
 Скрипт `postgres_counter.py` запускає п'ять сценаріїв конкурентних оновлень у базі PostgreSQL: `lost-update`, `serializable`,
 `in-place`, `row-locking`, `optimistic`. Кожен варіант створює власні підключення для потоків, комітить кожну операцію та повертає
@@ -193,7 +193,7 @@ python postgres_counter.py --dsn "postgres://user:pass@localhost/db" \
 
 Очікуване значення `count` після завершення — `100000`.
 
-## Hazelcast (Task 3)
+## Hazelcast
 
 ### Запуск 3 нод Hazelcast 5.4.0 у Docker
 
@@ -230,7 +230,7 @@ python postgres_counter.py --dsn "postgres://user:pass@localhost/db" \
    docker logs -f hazelcast-1
    ```
 
-### Запуск сценаріїв Task 3
+### Запуск сценаріїв
 
 Скрипт `hazelcast_counter.py` запускає чотири сценарії:
 
