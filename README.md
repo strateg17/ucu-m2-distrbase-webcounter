@@ -197,7 +197,7 @@ postgres://counter_user:counter_pass@localhost:5432/counter_db
 
 Скрипт `hazelcast_counter.py` запускає чотири сценарії:
 
-- `map-no-lock` — інкремент у Distributed Map без блокувань.
+- `map-no-lock` — інкремент у Distributed Map без блокувань (оновлює поле `amount` у значенні, з затримкою для демонстрації гонки).
 - `map-pessimistic` — песимістичне блокування `IMap.lock`.
 - `map-optimistic` — оптимістичне блокування через `replace_if_same`.
 - `atomic-long` — IAtomicLong (потребує CP Subsystem).
