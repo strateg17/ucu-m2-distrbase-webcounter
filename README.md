@@ -48,6 +48,28 @@ clients=5 requests_per_client=10000 total_requests=50000 elapsed=2.345s throughp
 
 `count` показує фактичне значення на сервері після навантаження.
 
+Після старту сервера можна запускати клієнт:
+
+```bash
+python client.py http://localhost:8080 --clients 10 --requests-per-client 10000
+```
+
+## Перед початком вимірювань
+
+1. **Почистити стан**: перед новою серією тестів видаліть файл лічильника або перезапустіть сервер, щоб значення починалось з нуля.
+2. **Паралельний старт клієнтів**: усі потоки стартують одночасно за допомогою бар’єру, що дозволяє оцінювати мультиклієнтські сценарії.
+3. **Безпечність**: у пам'ятному режимі використовується `threading.Lock`, у файловому — блокування файлу через `fcntl`, що усуває `lost update` під час конкурентних записів.
+
+## Приклади серій
+
+- 1 клієнт × 10K запитів → очікуване `count = 10_000`
+- 2 клієнти × 10K запитів → очікуване `count = 20_000`
+- 5 клієнтів × 10K запитів → очікуване `count = 50_000`
+- 10 клієнтів × 10K запитів → очікуване `count = 100_000`
+
+Після кожної серії throughput можна отримати зі стандартного виводу `client.py`, а фінальне значення лічильника — через `GET /count` або з того ж виводу.
+
+
 ## PostgreSQL як сховище
 
 Сервер підтримує сховище в PostgreSQL з атомарним збільшенням лічильника:
@@ -144,6 +166,21 @@ postgres://counter_user:counter_pass@localhost:5432/counter_db
    python postgres_counter.py --dsn "postgres://counter_user:counter_pass@localhost:5432/counter_db" \
      --scenario row-locking --clients 10 --requests-per-client 10000 --reset
    ```
+## Тести PostgreSQL для завдання 2
+
+Скрипт `postgres_counter.py` запускає п'ять сценаріїв конкурентних оновлень у базі PostgreSQL: `lost-update`, `serializable`,
+`in-place`, `row-locking`, `optimistic`. Кожен варіант створює власні підключення для потоків, комітить кожну операцію та повертає
+час виконання.
+
+Перед запуском можна створити таблицю та початковий запис прапорцем `--prepare`, а очищення значення виконується через `--reset`.
+
+```bash
+python postgres_counter.py --dsn "postgres://user:pass@localhost/db" \
+  --scenario in-place --clients 10 --requests-per-client 10000 --prepare --reset
+```
+
+Після завершення скрипт друкує фактичне значення `counter`/`version`, час виконання та throughput, що дозволяє порівнювати
+продуктивність усіх стратегій.
 
 ### Тест продуктивності для Web-counter (10 клієнтів × 10K)
 
@@ -197,11 +234,6 @@ postgres://counter_user:counter_pass@localhost:5432/counter_db
 
 Скрипт `hazelcast_counter.py` запускає чотири сценарії:
 
-- `map-no-lock` — інкремент у Distributed Map без блокувань (оновлює поле `amount` у значенні, з затримкою для демонстрації гонки).
-- `map-pessimistic` — песимістичне блокування `IMap.lock`.
-- `map-optimistic` — оптимістичне блокування через `replace_if_same`.
-- `atomic-long` — IAtomicLong (потребує CP Subsystem).
-
 Приклад запуску (10 потоків × 10К):
 
 ```bash
@@ -209,12 +241,6 @@ python hazelcast_counter.py --scenario map-no-lock --clients 10 --requests-per-c
 python hazelcast_counter.py --scenario map-pessimistic --clients 10 --requests-per-client 10000 --reset
 python hazelcast_counter.py --scenario map-optimistic --clients 10 --requests-per-client 10000 --reset
 python hazelcast_counter.py --scenario atomic-long --clients 10 --requests-per-client 10000 --reset
-```
-
-Для перевірки `redo_operation`:
-
-```bash
-python hazelcast_counter.py --scenario atomic-long --clients 10 --requests-per-client 10000 --reset --redo-operation
 ```
 
 ### Використання Hazelcast як сховища Web-counter (Task 1)
@@ -228,39 +254,6 @@ HAZELCAST_REDO_OPERATION=false \
 uvicorn server:app --host 0.0.0.0 --port 8080
 ```
 
-Після старту сервера можна запускати клієнт:
 
-```bash
-python client.py http://localhost:8080 --clients 10 --requests-per-client 10000
-```
 
-## Перед початком вимірювань
 
-1. **Почистити стан**: перед новою серією тестів видаліть файл лічильника або перезапустіть сервер, щоб значення починалось з нуля.
-2. **Паралельний старт клієнтів**: усі потоки стартують одночасно за допомогою бар’єру, що дозволяє оцінювати мультиклієнтські сценарії.
-3. **Безпечність**: у пам'ятному режимі використовується `threading.Lock`, у файловому — блокування файлу через `fcntl`, що усуває `lost update` під час конкурентних записів.
-
-## Приклади серій
-
-- 1 клієнт × 10K запитів → очікуване `count = 10_000`
-- 2 клієнти × 10K запитів → очікуване `count = 20_000`
-- 5 клієнтів × 10K запитів → очікуване `count = 50_000`
-- 10 клієнтів × 10K запитів → очікуване `count = 100_000`
-
-Після кожної серії throughput можна отримати зі стандартного виводу `client.py`, а фінальне значення лічильника — через `GET /count` або з того ж виводу.
-
-## Тести PostgreSQL для завдання 2
-
-Скрипт `postgres_counter.py` запускає п'ять сценаріїв конкурентних оновлень у базі PostgreSQL: `lost-update`, `serializable`,
-`in-place`, `row-locking`, `optimistic`. Кожен варіант створює власні підключення для потоків, комітить кожну операцію та повертає
-час виконання.
-
-Перед запуском можна створити таблицю та початковий запис прапорцем `--prepare`, а очищення значення виконується через `--reset`.
-
-```bash
-python postgres_counter.py --dsn "postgres://user:pass@localhost/db" \
-  --scenario in-place --clients 10 --requests-per-client 10000 --prepare --reset
-```
-
-Після завершення скрипт друкує фактичне значення `counter`/`version`, час виконання та throughput, що дозволяє порівнювати
-продуктивність усіх стратегій.
