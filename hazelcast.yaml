@@ -1,6 +1,6 @@
 hazelcast:
   cluster-name: dev
-  cp-subsystem:
-    cp-member-count: 3
-    group-size: 3
-    persistence-enabled: false
+    #  cp-subsystem:
+    # cp-member-count: 3
+    # group-size: 3
+    # persistence-enabled: false
