@@ -1,0 +1,419 @@
+
+CREATE KEYSPACE shop WITH replication = {'class': 'SimpleStrategy', 'replication_factor': '1'}  AND durable_writes = true;
+
+CREATE TABLE shop.items (
+    category text,
+    price decimal,
+    item_id uuid,
+    description text,
+    name text,
+    producer text,
+    attrs map<text, text>,
+    PRIMARY KEY (category, price, item_id)
+) WITH CLUSTERING ORDER BY (price ASC, item_id ASC)
+    AND additional_write_policy = '99p'
+    AND allow_auto_snapshot = true
+    AND bloom_filter_fp_chance = 0.01
+    AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
+    AND cdc = false
+    AND comment = ''
+    AND compaction = {'class': 'org.apache.cassandra.db.compaction.SizeTieredCompactionStrategy', 'max_threshold': '32', 'min_threshold': '4'}
+    AND compression = {'chunk_length_in_kb': '16', 'class': 'org.apache.cassandra.io.compress.LZ4Compressor'}
+    AND memtable = 'default'
+    AND crc_check_chance = 1.0
+    AND default_time_to_live = 0
+    AND extensions = {}
+    AND gc_grace_seconds = 864000
+    AND incremental_backups = true
+    AND max_index_interval = 2048
+    AND memtable_flush_period_in_ms = 0
+    AND min_index_interval = 128
+    AND read_repair = 'BLOCKING'
+    AND speculative_retry = '99p';
+
+CREATE TABLE shop.items (
+    category text,
+    price decimal,
+    item_id uuid,
+    description text,
+    name text,
+    producer text,
+    attrs map<text, text>,
+    PRIMARY KEY (category, price, item_id)
+) WITH CLUSTERING ORDER BY (price ASC, item_id ASC)
+    AND additional_write_policy = '99p'
+    AND allow_auto_snapshot = true
+    AND bloom_filter_fp_chance = 0.01
+    AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
+    AND cdc = false
+    AND comment = ''
+    AND compaction = {'class': 'org.apache.cassandra.db.compaction.SizeTieredCompactionStrategy', 'max_threshold': '32', 'min_threshold': '4'}
+    AND compression = {'chunk_length_in_kb': '16', 'class': 'org.apache.cassandra.io.compress.LZ4Compressor'}
+    AND memtable = 'default'
+    AND crc_check_chance = 1.0
+    AND default_time_to_live = 0
+    AND extensions = {}
+    AND gc_grace_seconds = 864000
+    AND incremental_backups = true
+    AND max_index_interval = 2048
+    AND memtable_flush_period_in_ms = 0
+    AND min_index_interval = 128
+    AND read_repair = 'BLOCKING'
+    AND speculative_retry = '99p';
+
+CREATE TABLE shop.orders (
+    customer_id uuid,
+    order_time timestamp,
+    order_id uuid,
+    delivery_address text,
+    total_sum decimal,
+    items list<uuid>,
+    PRIMARY KEY (customer_id, order_time, order_id)
+) WITH CLUSTERING ORDER BY (order_time DESC, order_id ASC)
+    AND additional_write_policy = '99p'
+    AND allow_auto_snapshot = true
+    AND bloom_filter_fp_chance = 0.01
+    AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
+    AND cdc = false
+    AND comment = ''
+    AND compaction = {'class': 'org.apache.cassandra.db.compaction.SizeTieredCompactionStrategy', 'max_threshold': '32', 'min_threshold': '4'}
+    AND compression = {'chunk_length_in_kb': '16', 'class': 'org.apache.cassandra.io.compress.LZ4Compressor'}
+    AND memtable = 'default'
+    AND crc_check_chance = 1.0
+    AND default_time_to_live = 0
+    AND extensions = {}
+    AND gc_grace_seconds = 864000
+    AND incremental_backups = true
+    AND max_index_interval = 2048
+    AND memtable_flush_period_in_ms = 0
+    AND min_index_interval = 128
+    AND read_repair = 'BLOCKING'
+    AND speculative_retry = '99p';
+
+CREATE CUSTOM INDEX items_name_sai ON shop.items (name) USING 'StorageAttachedIndex';
+
+CREATE CUSTOM INDEX items_producer_sai ON shop.items (producer) USING 'StorageAttachedIndex';
+
+CREATE CUSTOM INDEX items_attrs_keys_sai ON shop.items (keys(attrs)) USING 'StorageAttachedIndex';
+
+CREATE CUSTOM INDEX items_attrs_entries_sai ON shop.items (entries(attrs)) USING 'StorageAttachedIndex';
+
+ category | price  | item_id                              | name       | producer | attrs
+----------+--------+--------------------------------------+------------+----------+----------------------------------------------------------------------------
+    Phone | 599.00 | 68dd7c2f-5cc4-4921-963d-f6413576f43d |   iPhone 6 |    Apple |                 {'color': 'space_gray', 'nfc': 'true', 'storage_gb': '64'}
+    Phone | 749.00 | fcd449a5-27c2-434e-b991-0515dad85cfc | Galaxy S21 |  Samsung | {'color': 'black', 'dual_sim': 'true', 'nfc': 'true', 'storage_gb': '128'}
+    Phone | 899.00 | 9dfb9ccc-2869-451a-9569-92b809605c07 |    Pixel 7 |   Google |                     {'color': 'snow', 'esim': 'true', 'storage_gb': '128'}
+
+(3 rows)
+
+ category | price   | item_id                              | name        | producer | attrs
+----------+---------+--------------------------------------+-------------+----------+-----------------------------------------------------------------------
+       TV |  799.00 | 86ba3c19-0417-42a1-acbc-4dc3cb69a5af |        Q60B |  Samsung | {'hdr': 'true', 'panel': 'QLED', 'resolution': '4K', 'size_in': '50'}
+       TV | 1099.00 | 5597043a-a24b-4706-ad5f-fe0c4e1a0528 | Bravia X90K |     Sony |  {'hdr': 'true', 'panel': 'LED', 'resolution': '4K', 'size_in': '55'}
+
+(2 rows)
+
+CREATE TABLE shop.items (
+    category text,
+    price decimal,
+    item_id uuid,
+    description text,
+    name text,
+    producer text,
+    attrs map<text, text>,
+    PRIMARY KEY (category, price, item_id)
+) WITH CLUSTERING ORDER BY (price ASC, item_id ASC)
+    AND additional_write_policy = '99p'
+    AND allow_auto_snapshot = true
+    AND bloom_filter_fp_chance = 0.01
+    AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
+    AND cdc = false
+    AND comment = ''
+    AND compaction = {'class': 'org.apache.cassandra.db.compaction.SizeTieredCompactionStrategy', 'max_threshold': '32', 'min_threshold': '4'}
+    AND compression = {'chunk_length_in_kb': '16', 'class': 'org.apache.cassandra.io.compress.LZ4Compressor'}
+    AND memtable = 'default'
+    AND crc_check_chance = 1.0
+    AND default_time_to_live = 0
+    AND extensions = {}
+    AND gc_grace_seconds = 864000
+    AND incremental_backups = true
+    AND max_index_interval = 2048
+    AND memtable_flush_period_in_ms = 0
+    AND min_index_interval = 128
+    AND read_repair = 'BLOCKING'
+    AND speculative_retry = '99p';
+
+CREATE CUSTOM INDEX items_attrs_entries_sai ON shop.items (entries(attrs)) USING 'StorageAttachedIndex';
+
+CREATE CUSTOM INDEX items_attrs_keys_sai ON shop.items (keys(attrs)) USING 'StorageAttachedIndex';
+
+CREATE CUSTOM INDEX items_name_sai ON shop.items (name) USING 'StorageAttachedIndex';
+
+CREATE CUSTOM INDEX items_producer_sai ON shop.items (producer) USING 'StorageAttachedIndex';
+
+ category | price  | item_id                              | name       | producer
+----------+--------+--------------------------------------+------------+----------
+    Phone | 599.00 | 68dd7c2f-5cc4-4921-963d-f6413576f43d |   iPhone 6 |    Apple
+    Phone | 749.00 | fcd449a5-27c2-434e-b991-0515dad85cfc | Galaxy S21 |  Samsung
+    Phone | 899.00 | 9dfb9ccc-2869-451a-9569-92b809605c07 |    Pixel 7 |   Google
+
+(3 rows)
+
+ category | price  | item_id                              | name     | producer | attrs
+----------+--------+--------------------------------------+----------+----------+------------------------------------------------------------
+    Phone | 599.00 | 68dd7c2f-5cc4-4921-963d-f6413576f43d | iPhone 6 |    Apple | {'color': 'space_gray', 'nfc': 'true', 'storage_gb': '64'}
+
+(1 rows)
+
+ category | price  | item_id                              | name       | producer
+----------+--------+--------------------------------------+------------+----------
+    Phone | 749.00 | fcd449a5-27c2-434e-b991-0515dad85cfc | Galaxy S21 |  Samsung
+    Phone | 899.00 | 9dfb9ccc-2869-451a-9569-92b809605c07 |    Pixel 7 |   Google
+
+(2 rows)
+
+ category | price  | item_id                              | name     | producer
+----------+--------+--------------------------------------+----------+----------
+    Phone | 599.00 | 68dd7c2f-5cc4-4921-963d-f6413576f43d | iPhone 6 |    Apple
+
+(1 rows)
+
+ category | price  | item_id                              | name       | producer | attrs
+----------+--------+--------------------------------------+------------+----------+----------------------------------------------------------------------------
+    Phone | 599.00 | 68dd7c2f-5cc4-4921-963d-f6413576f43d |   iPhone 6 |    Apple |                 {'color': 'space_gray', 'nfc': 'true', 'storage_gb': '64'}
+    Phone | 749.00 | fcd449a5-27c2-434e-b991-0515dad85cfc | Galaxy S21 |  Samsung | {'color': 'black', 'dual_sim': 'true', 'nfc': 'true', 'storage_gb': '128'}
+
+(2 rows)
+
+ category | price  | item_id                              | name       | producer | attrs
+----------+--------+--------------------------------------+------------+----------+----------------------------------------------------------------------------
+    Phone | 749.00 | fcd449a5-27c2-434e-b991-0515dad85cfc | Galaxy S21 |  Samsung | {'color': 'black', 'dual_sim': 'true', 'nfc': 'true', 'storage_gb': '128'}
+    Phone | 899.00 | 9dfb9ccc-2869-451a-9569-92b809605c07 |    Pixel 7 |   Google |                     {'color': 'snow', 'esim': 'true', 'storage_gb': '128'}
+
+(2 rows)
+
+ category | price  | item_id                              | name     | producer | attrs
+----------+--------+--------------------------------------+----------+----------+------------------------------------------------------------
+    Phone | 599.00 | 68dd7c2f-5cc4-4921-963d-f6413576f43d | iPhone 6 |    Apple | {'color': 'space_gray', 'nfc': 'true', 'storage_gb': '64'}
+
+(1 rows)
+
+ category | price  | item_id                              | name     | producer | attrs
+----------+--------+--------------------------------------+----------+----------+------------------------------------------------------------
+    Phone | 599.00 | 68dd7c2f-5cc4-4921-963d-f6413576f43d | iPhone 6 |    Apple | {'color': 'space_gray', 'nfc': 'true', 'storage_gb': '64'}
+
+(1 rows)
+
+ category | price  | item_id                              | name     | producer | description                      | attrs
+----------+--------+--------------------------------------+----------+----------+----------------------------------+---------------------------------------------------------------------------
+    Phone | 599.00 | 68dd7c2f-5cc4-4921-963d-f6413576f43d | iPhone 6 |    Apple | Updated description for iPhone 6 | {'color': 'space_gray', 'storage_gb': '256', 'wireless_charging': 'true'}
+
+(1 rows)
+
+CREATE TABLE shop.orders_by_customer (
+    customer_name text,
+    order_time timestamp,
+    order_id uuid,
+    delivery_address text,
+    total_sum decimal,
+    items set<uuid>,
+    PRIMARY KEY (customer_name, order_time, order_id)
+) WITH CLUSTERING ORDER BY (order_time DESC, order_id ASC)
+    AND additional_write_policy = '99p'
+    AND allow_auto_snapshot = true
+    AND bloom_filter_fp_chance = 0.01
+    AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
+    AND cdc = false
+    AND comment = ''
+    AND compaction = {'class': 'org.apache.cassandra.db.compaction.SizeTieredCompactionStrategy', 'max_threshold': '32', 'min_threshold': '4'}
+    AND compression = {'chunk_length_in_kb': '16', 'class': 'org.apache.cassandra.io.compress.LZ4Compressor'}
+    AND memtable = 'default'
+    AND crc_check_chance = 1.0
+    AND default_time_to_live = 0
+    AND extensions = {}
+    AND gc_grace_seconds = 864000
+    AND incremental_backups = true
+    AND max_index_interval = 2048
+    AND memtable_flush_period_in_ms = 0
+    AND min_index_interval = 128
+    AND read_repair = 'BLOCKING'
+    AND speculative_retry = '99p';
+
+CREATE TABLE shop.orders_by_customer_item (
+    customer_name text,
+    item_id uuid,
+    order_time timestamp,
+    order_id uuid,
+    total_sum decimal,
+    PRIMARY KEY ((customer_name, item_id), order_time, order_id)
+) WITH CLUSTERING ORDER BY (order_time DESC, order_id ASC)
+    AND additional_write_policy = '99p'
+    AND allow_auto_snapshot = true
+    AND bloom_filter_fp_chance = 0.01
+    AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
+    AND cdc = false
+    AND comment = ''
+    AND compaction = {'class': 'org.apache.cassandra.db.compaction.SizeTieredCompactionStrategy', 'max_threshold': '32', 'min_threshold': '4'}
+    AND compression = {'chunk_length_in_kb': '16', 'class': 'org.apache.cassandra.io.compress.LZ4Compressor'}
+    AND memtable = 'default'
+    AND crc_check_chance = 1.0
+    AND default_time_to_live = 0
+    AND extensions = {}
+    AND gc_grace_seconds = 864000
+    AND incremental_backups = true
+    AND max_index_interval = 2048
+    AND memtable_flush_period_in_ms = 0
+    AND min_index_interval = 128
+    AND read_repair = 'BLOCKING'
+    AND speculative_retry = '99p';
+
+CREATE TABLE shop.customer_order_stats (
+    customer_name text PRIMARY KEY,
+    max_order_id uuid,
+    max_order_sum decimal,
+    max_order_time timestamp,
+    total_spent decimal,
+    updated_at timestamp
+) WITH additional_write_policy = '99p'
+    AND allow_auto_snapshot = true
+    AND bloom_filter_fp_chance = 0.01
+    AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
+    AND cdc = false
+    AND comment = ''
+    AND compaction = {'class': 'org.apache.cassandra.db.compaction.SizeTieredCompactionStrategy', 'max_threshold': '32', 'min_threshold': '4'}
+    AND compression = {'chunk_length_in_kb': '16', 'class': 'org.apache.cassandra.io.compress.LZ4Compressor'}
+    AND memtable = 'default'
+    AND crc_check_chance = 1.0
+    AND default_time_to_live = 0
+    AND extensions = {}
+    AND gc_grace_seconds = 864000
+    AND incremental_backups = true
+    AND max_index_interval = 2048
+    AND memtable_flush_period_in_ms = 0
+    AND min_index_interval = 128
+    AND read_repair = 'BLOCKING'
+    AND speculative_retry = '99p';
+
+ customer_name | order_time                      | total_sum | items
+---------------+---------------------------------+-----------+------------------------------------------------------------------------------
+        Andrii | 2026-02-06 09:15:00.000000+0000 |   1500.00 | {22222222-2222-2222-2222-222222222222, 33333333-3333-3333-3333-333333333333}
+        Andrii | 2026-02-03 12:00:00.000000+0000 |    800.00 |                                       {11111111-1111-1111-1111-111111111111}
+        Andrii | 2026-02-01 10:00:00.000000+0000 |   1200.00 | {11111111-1111-1111-1111-111111111111, 22222222-2222-2222-2222-222222222222}
+
+(3 rows)
+
+ customer_name | item_id                              | order_time                      | total_sum
+---------------+--------------------------------------+---------------------------------+-----------
+        Andrii | 11111111-1111-1111-1111-111111111111 | 2026-02-03 12:00:00.000000+0000 |    800.00
+        Andrii | 11111111-1111-1111-1111-111111111111 | 2026-02-01 10:00:00.000000+0000 |   1200.00
+
+(2 rows)
+
+ customer_name | max_order_id                         | max_order_sum | max_order_time                  | total_spent | updated_at
+---------------+--------------------------------------+---------------+---------------------------------+-------------+---------------------------------
+         Olena | b55e32e7-c0e3-45b7-a2d7-b9be696b541d |       2200.00 | 2026-02-07 08:00:00.000000+0000 |     2500.00 | 2026-02-08 00:00:00.000000+0000
+        Andrii | aa1068cb-0f41-4201-b1c4-247ce7792720 |       1500.00 | 2026-02-06 09:15:00.000000+0000 |     3500.00 | 2026-02-08 00:00:00.000000+0000
+
+(2 rows)
+
+CREATE TABLE shop.orders_by_customer (
+    customer_name text,
+    order_time timestamp,
+    order_id uuid,
+    delivery_address text,
+    total_sum decimal,
+    items set<uuid>,
+    PRIMARY KEY (customer_name, order_time, order_id)
+) WITH CLUSTERING ORDER BY (order_time DESC, order_id ASC)
+    AND additional_write_policy = '99p'
+    AND allow_auto_snapshot = true
+    AND bloom_filter_fp_chance = 0.01
+    AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
+    AND cdc = false
+    AND comment = ''
+    AND compaction = {'class': 'org.apache.cassandra.db.compaction.SizeTieredCompactionStrategy', 'max_threshold': '32', 'min_threshold': '4'}
+    AND compression = {'chunk_length_in_kb': '16', 'class': 'org.apache.cassandra.io.compress.LZ4Compressor'}
+    AND memtable = 'default'
+    AND crc_check_chance = 1.0
+    AND default_time_to_live = 0
+    AND extensions = {}
+    AND gc_grace_seconds = 864000
+    AND incremental_backups = true
+    AND max_index_interval = 2048
+    AND memtable_flush_period_in_ms = 0
+    AND min_index_interval = 128
+    AND read_repair = 'BLOCKING'
+    AND speculative_retry = '99p';
+
+ customer_name | order_time                      | order_id                             | total_sum | items
+---------------+---------------------------------+--------------------------------------+-----------+------------------------------------------------------------------------------
+        Andrii | 2026-02-06 09:15:00.000000+0000 | 026c8790-ef3c-464d-9860-2628ee48c92a |   1500.00 | {22222222-2222-2222-2222-222222222222, 33333333-3333-3333-3333-333333333333}
+        Andrii | 2026-02-03 12:00:00.000000+0000 | 0ddb8618-1d1a-4e48-9d9a-36fb0f788463 |    800.00 |                                       {11111111-1111-1111-1111-111111111111}
+        Andrii | 2026-02-01 10:00:00.000000+0000 | b4721bee-3e3b-4f81-8e37-d0117e0cff00 |   1200.00 | {11111111-1111-1111-1111-111111111111, 22222222-2222-2222-2222-222222222222}
+
+(3 rows)
+
+ customer_name | item_id                              | order_time                      | order_id                             | total_sum
+---------------+--------------------------------------+---------------------------------+--------------------------------------+-----------
+        Andrii | 11111111-1111-1111-1111-111111111111 | 2026-02-03 12:00:00.000000+0000 | ec18e554-6943-438b-98c6-a59774d943f4 |    800.00
+        Andrii | 11111111-1111-1111-1111-111111111111 | 2026-02-01 10:00:00.000000+0000 | c0ec22e7-9d4a-4b80-a4bb-728a8bf7b7bd |   1200.00
+
+(2 rows)
+
+ customer_name | order_time                      | order_id                             | total_sum
+---------------+---------------------------------+--------------------------------------+-----------
+        Andrii | 2026-02-03 12:00:00.000000+0000 | 0ddb8618-1d1a-4e48-9d9a-36fb0f788463 |    800.00
+        Andrii | 2026-02-01 10:00:00.000000+0000 | b4721bee-3e3b-4f81-8e37-d0117e0cff00 |   1200.00
+
+(2 rows)
+
+ count
+-------
+     2
+
+(1 rows)
+
+ customer_name | total_spent
+---------------+-------------
+         Olena |     2500.00
+        Andrii |     3500.00
+
+(2 rows)
+
+ customer_name | max_order_sum | max_order_id                         | max_order_time
+---------------+---------------+--------------------------------------+---------------------------------
+         Olena |       2200.00 | b55e32e7-c0e3-45b7-a2d7-b9be696b541d | 2026-02-07 08:00:00.000000+0000
+        Andrii |       1500.00 | aa1068cb-0f41-4201-b1c4-247ce7792720 | 2026-02-06 09:15:00.000000+0000
+
+(2 rows)
+
+ customer_name | order_time                      | order_id                             | total_sum | items
+---------------+---------------------------------+--------------------------------------+-----------+------------------------------------------------------------------------------
+        Andrii | 2026-02-06 09:15:00.000000+0000 | 026c8790-ef3c-464d-9860-2628ee48c92a |   1500.00 | {22222222-2222-2222-2222-222222222222, 33333333-3333-3333-3333-333333333333}
+        Andrii | 2026-02-03 12:00:00.000000+0000 | 0ddb8618-1d1a-4e48-9d9a-36fb0f788463 |    800.00 |                                       {11111111-1111-1111-1111-111111111111}
+        Andrii | 2026-02-01 10:00:00.000000+0000 | b4721bee-3e3b-4f81-8e37-d0117e0cff00 |   1200.00 | {11111111-1111-1111-1111-111111111111, 22222222-2222-2222-2222-222222222222}
+
+(3 rows)
+
+ customer_name | order_time                      | order_id                             | total_sum | items
+---------------+---------------------------------+--------------------------------------+-----------+------------------------------------------------------------------------------
+        Andrii | 2026-02-06 09:15:00.000000+0000 | 026c8790-ef3c-464d-9860-2628ee48c92a |   1500.00 | {22222222-2222-2222-2222-222222222222, 33333333-3333-3333-3333-333333333333}
+        Andrii | 2026-02-03 12:00:00.000000+0000 | 0ddb8618-1d1a-4e48-9d9a-36fb0f788463 |    800.00 |                                       {11111111-1111-1111-1111-111111111111}
+        Andrii | 2026-02-01 10:00:00.000000+0000 | b4721bee-3e3b-4f81-8e37-d0117e0cff00 |   1200.00 | {11111111-1111-1111-1111-111111111111, 22222222-2222-2222-2222-222222222222}
+
+(3 rows)
+<stdin>:21:InvalidRequest: Error from server: code=2200 [Invalid query] message="Invalid operation (total_sum = total_sum + 200.00) for non counter column total_sum"
+<stdin>:29:InvalidRequest: Error from server: code=2200 [Invalid query] message="Invalid operation (total_sum = total_sum - 100.00) for non counter column total_sum"
+<stdin>:37:InvalidRequest: Error from server: code=2200 [Invalid query] message="Unable to parse a date/time from '2026-02-06 09:15:00.000000+000'"
+
+ customer_name | order_time                      | order_id                             | total_sum
+---------------+---------------------------------+--------------------------------------+-----------
+        Andrii | 2026-02-10 10:00:00.000000+0000 | b09ae70e-96f5-41ea-a378-e6ee06f59f4c |     50.00
+
+(1 rows)
+
+ id   | value
+------+-------
+ main |     0
+
+(1 rows)
